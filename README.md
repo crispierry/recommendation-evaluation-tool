@@ -1,4 +1,4 @@
-# Short-Form Recommendation Evaluation Lab
+# Recommendation Evaluation Tool
 
 A deterministic, privacy-safe demonstration of how product and editorial teams
 can evaluate a short-form recommendation feed.

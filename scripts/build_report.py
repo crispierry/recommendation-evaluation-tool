@@ -182,7 +182,7 @@ def configure_styles(doc: Document) -> None:
 
 def configure_properties(doc: Document) -> None:
     props = doc.core_properties
-    props.title = "Short-Form Recommendation Evaluation Lab"
+    props.title = "Recommendation Evaluation Tool"
     props.subject = "Deterministic synthetic evaluation of catalog continuity and exact-clip recurrence"
     props.author = "Cristiano Pierry"
     props.last_modified_by = "Cristiano Pierry"
@@ -195,7 +195,7 @@ def configure_header_footer(section) -> None:
     header = section.header
     paragraph = header.paragraphs[0]
     paragraph.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-    run = paragraph.add_run("RECOMMENDATION EVALUATION LAB  ·  SYNTHETIC")
+    run = paragraph.add_run("RECOMMENDATION EVALUATION TOOL  ·  SYNTHETIC")
     set_run(run, 8, MUTED, bold=True)
 
     footer = section.footer
@@ -216,7 +216,7 @@ def add_cover(doc: Document, analysis: dict) -> None:
 
     title = doc.add_paragraph(style="Title")
     title.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    title.add_run("Short-Form Recommendation\nEvaluation Lab")
+    title.add_run("Recommendation\nEvaluation Tool")
 
     subtitle = doc.add_paragraph(style="Subtitle")
     subtitle.alignment = WD_ALIGN_PARAGRAPH.CENTER
