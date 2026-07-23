@@ -441,7 +441,7 @@ async function renderScreen(clip, title, destination) {
       <path d="M16 ${620 - number * 22} C150 ${450 + number * 26} 350 ${740 - number * 18} 524 ${390 + number * 34} L524 944 L16 944 Z" fill="${accent}" opacity="0.88"/>
       <circle cx="${110 + number * 82}" cy="${210 + number * 64}" r="${86 + number * 9}" fill="${ink}" opacity="0.2"/>
       <rect x="36" y="42" width="126" height="30" rx="15" fill="${ink}" opacity="0.78"/>
-      <text x="55" y="63" fill="#fcfaf4" font-family="Arial, sans-serif" font-size="14" letter-spacing="2">SHORTFORM LAB</text>
+      <text x="55" y="63" fill="#fcfaf4" font-family="Arial, sans-serif" font-size="14" letter-spacing="2">EVALUATION TOOL</text>
       <text x="38" y="742" fill="${ink}" font-family="Georgia, serif" font-size="46">${escapeXml(splitTitle(title.title)[0])}</text>
       <text x="38" y="794" fill="${ink}" font-family="Georgia, serif" font-size="46">${escapeXml(splitTitle(title.title)[1])}</text>
       <text x="40" y="836" fill="${ink}" font-family="Arial, sans-serif" font-size="18">${escapeXml(clip.sceneLabel)} · ${escapeXml(title.genre)}</text>
