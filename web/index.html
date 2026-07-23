@@ -20,7 +20,7 @@
       </div>
       <div class="header-actions">
         <span class="synthetic-badge">100% synthetic</span>
-        <a href="./short-form-recommendation-evaluation-report.docx" download>Download analysis</a>
+        <a href="#findings">Read findings</a>
       </div>
     </header>
 
@@ -30,6 +30,7 @@
       <button type="button" data-view="catalog" aria-selected="false">Unique Clips</button>
       <button type="button" data-view="issues" aria-selected="false">Content Issues</button>
       <button type="button" data-view="analytics" aria-selected="false">Analytics</button>
+      <button type="button" data-view="findings" aria-selected="false">Findings Report</button>
       <button type="button" data-view="review" aria-selected="false">Review Center</button>
     </nav>
 
@@ -138,6 +139,123 @@
           <h2>Observed patterns are not causal explanations.</h2>
           <p>The configured data demonstrates an evaluation method. It does not describe real viewers, ranking intent, model features, or production performance. Title overlap and exact-clip recurrence use different grains and are never combined.</p>
         </section>
+      </section>
+
+      <section class="view findings-view" data-panel="findings" hidden>
+        <article class="report-shell" aria-labelledby="findings-report-title">
+          <header class="report-title-block">
+            <p class="eyebrow">Executive readout · Synthetic data</p>
+            <h1 id="findings-report-title">What the synthetic feed evaluation found</h1>
+            <p>
+              A decision-ready analysis of same-day recurrence, five-day continuity,
+              RFY alignment, and catalog persistence. Every result is computed from
+              this tool’s frozen fictional dataset.
+            </p>
+          </header>
+
+          <section class="report-section report-summary" aria-labelledby="executive-summary-title">
+            <h2 id="executive-summary-title">Executive Summary</h2>
+            <div id="findingsExecutiveSummary" class="summary-list"></div>
+          </section>
+
+          <div id="findingsMetrics" class="metric-strip report-metrics"></div>
+
+          <section class="report-section" aria-labelledby="rfy-findings-title">
+            <div class="report-section-head">
+              <div>
+                <p class="eyebrow">Surface alignment</p>
+                <h2 id="rfy-findings-title">RFY represents only part of the visible recommendation stream.</h2>
+              </div>
+              <p>
+                For each routine profile, the first 30 recommendations on Synthetic
+                Day 5 are checked against that profile’s separate 30-title synthetic
+                RFY rail.
+              </p>
+            </div>
+            <div id="findingsRfyChart" class="report-chart"></div>
+            <div id="findingsRfyDetail" class="report-detail-grid"></div>
+          </section>
+
+          <section class="report-section" aria-labelledby="repeat-findings-title">
+            <div class="report-section-head">
+              <div>
+                <p class="eyebrow">Controlled repetition</p>
+                <h2 id="repeat-findings-title">Exact-clip recurrence separates the three test profiles.</h2>
+              </div>
+              <p>
+                Each profile has three independent 20-position runs. A repeat counts
+                only when the identical canonical clip appeared in an earlier run.
+              </p>
+            </div>
+            <div id="findingsRepeatProfiles" class="report-profile-grid"></div>
+            <h3>Top recurring exact clips by profile</h3>
+            <div id="findingsRepeatTables" class="report-table-stack"></div>
+            <h3>Titles present in every controlled run</h3>
+            <p class="report-intro">
+              Title persistence is deliberately separate from exact-clip recurrence:
+              different canonical clips under the same fictional title may contribute.
+            </p>
+            <div id="findingsRepeatPersistence"></div>
+          </section>
+
+          <section class="report-section" aria-labelledby="continuity-findings-title">
+            <div class="report-section-head">
+              <div>
+                <p class="eyebrow">Five synthetic days</p>
+                <h2 id="continuity-findings-title">Adjacent-day overlap does not guarantee five-day persistence.</h2>
+              </div>
+              <p>
+                Synthetic Day 5’s first 50 recommendations are compared with the
+                same profile’s first 50 on each of the four earlier days.
+              </p>
+            </div>
+            <div id="findingsContinuityProfiles" class="report-profile-grid"></div>
+            <h3>Titles present across all five days</h3>
+            <p class="report-intro">
+              A title qualifies only if it appears at least once in every daily
+              Top-50 window. When none qualify, the table shows the nearest
+              persistent titles so the absence is visible rather than hidden.
+            </p>
+            <div id="findingsContinuityTables" class="report-table-stack"></div>
+          </section>
+
+          <section class="report-section" aria-labelledby="next-findings-title">
+            <div class="report-section-head">
+              <div>
+                <p class="eyebrow">Decision use</p>
+                <h2 id="next-findings-title">Use the measures together, but never blend their grains.</h2>
+              </div>
+              <p>
+                The tool is most useful as a repeatable evaluation protocol:
+                monitor exact clips for fatigue, titles for catalog continuity,
+                and RFY alignment for cross-surface representation.
+              </p>
+            </div>
+            <div class="report-closing-grid">
+              <section>
+                <h3>Recommended next evaluations</h3>
+                <ol>
+                  <li>Add position-weighted measures to distinguish top-of-feed recurrence from lower-position repeats.</li>
+                  <li>Advance the five-day anchor and test whether profile ordering remains stable.</li>
+                  <li>Introduce controlled catalog shocks and measure how quickly novelty and RFY alignment respond.</li>
+                  <li>Track Review Center precision against the synthetic ground truth.</li>
+                </ol>
+              </section>
+              <section>
+                <h3>Further questions</h3>
+                <ul>
+                  <li>Do persistent titles remain persistent when the observation window expands?</li>
+                  <li>Does high title continuity come from the same canonical clips or from different scenes?</li>
+                  <li>How sensitive is RFY alignment to rail size and the first-N recommendation window?</li>
+                </ul>
+              </section>
+            </div>
+            <aside class="report-caveat">
+              <h3>Interpretation limits</h3>
+              <ul id="findingsLimitations"></ul>
+            </aside>
+          </section>
+        </article>
       </section>
 
       <section class="view" data-panel="review" hidden>

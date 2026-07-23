@@ -35,6 +35,24 @@
       }
     ]
   },
+  "rfy": {
+    "titlesPerProfile": 30,
+    "shortsWindow": 30,
+    "profiles": [
+      {
+        "profileId": "profile-a",
+        "alignmentRate": 0.2
+      },
+      {
+        "profileId": "profile-b",
+        "alignmentRate": 0.33
+      },
+      {
+        "profileId": "profile-c",
+        "alignmentRate": 0.47
+      }
+    ]
+  },
   "repetition": {
     "runs": 3,
     "clipsPerRun": 20,

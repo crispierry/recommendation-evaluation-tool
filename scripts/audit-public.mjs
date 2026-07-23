@@ -1,4 +1,3 @@
-import { spawnSync } from "node:child_process";
 import { readdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -38,8 +37,9 @@ const manifest = JSON.parse(await readFile(path.join(dist, "artifact-manifest.js
 const expected = {
   titles: 500,
   canonicalClips: 2000,
-  routineAppearances: 750,
-  repetitionAppearances: 180,
+    routineAppearances: 750,
+    repetitionAppearances: 180,
+    rfyTitles: 90,
   reviewCases: 9,
 };
 for (const [key, value] of Object.entries(expected)) {
@@ -55,25 +55,8 @@ for (const relative of manifest.generatedFiles) {
 }
 
 const html = await readFile(path.join(dist, "index.html"), "utf8");
-for (const removed of ["simulation", "how-it-works", "rfy"]) {
+for (const removed of ["simulation", "how-it-works"]) {
   if (html.toLowerCase().includes(removed)) failures.push(`Removed public surface remains in index.html: ${removed}`);
-}
-
-const report = path.join(dist, "short-form-recommendation-evaluation-report.docx");
-const listing = spawnSync("unzip", ["-Z1", report], { encoding: "utf8" });
-if (listing.status !== 0) {
-  failures.push("Word report is not a readable OOXML package.");
-} else {
-  const entries = listing.stdout.split("\n");
-  for (const forbidden of ["word/comments.xml", "docProps/custom.xml", "word/people.xml"]) {
-    if (entries.includes(forbidden)) failures.push(`Word report contains ${forbidden}`);
-  }
-  const xml = spawnSync("unzip", ["-p", report, "word/document.xml", "docProps/core.xml", "word/_rels/document.xml.rels"], { encoding: "utf8" }).stdout;
-  if (/TargetMode="External"/.test(xml)) failures.push("Word report contains an external relationship.");
-  for (const token of prohibitedTokens) {
-    const pattern = new RegExp(`\\b${escapeRegExp(token)}\\b`);
-    if (pattern.test(xml)) failures.push("Word report contains a prohibited public token.");
-  }
 }
 
 if (failures.length) {

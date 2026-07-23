@@ -74,6 +74,16 @@ function bindTabs() {
   const requested = location.hash.replace("#", "");
   const requestedButton = document.querySelector(`[data-view="${CSS.escape(requested)}"]`);
   if (requestedButton) requestedButton.click();
+  document.querySelectorAll('a[href^="#"]').forEach((link) => {
+    link.addEventListener("click", (event) => {
+      const view = link.getAttribute("href").slice(1);
+      const button = document.querySelector(`[data-view="${CSS.escape(view)}"]`);
+      if (!button) return;
+      event.preventDefault();
+      button.click();
+      document.querySelector(`[data-panel="${CSS.escape(view)}"]`).scrollIntoView({ block: "start" });
+    });
+  });
 }
 
 function bindControls() {
@@ -125,6 +135,7 @@ function renderAll() {
   renderCatalog();
   renderIssues();
   renderAnalytics();
+  renderFindings();
   renderReview();
 }
 
@@ -268,6 +279,7 @@ function renderAnalytics() {
     ${[
       ["Catalog", `${config.catalog.titleCount} titles · ${config.catalog.clipsPerTitle.min}–${config.catalog.clipsPerTitle.max} clips`],
       ["Routine", `${config.routine.profiles.length} profiles · ${config.routine.days} days · ${config.routine.clipsPerProfilePerDay} clips/day`],
+      ["RFY", `${config.rfy.profiles.length} profiles · ${config.rfy.titlesPerProfile} titles · first ${config.rfy.shortsWindow} compared`],
       ["Repetition", `${config.repetition.profiles.length} profiles · ${config.repetition.runs} runs · ${config.repetition.clipsPerRun} clips/run`],
       ["Seed", String(config.seed)],
     ].map(([label, value]) => `<div><strong>${label}</strong><span>${value}</span></div>`).join("")}
@@ -286,6 +298,161 @@ function renderAnalytics() {
       label: item.profileLabel.split(" — ")[1],
       value: item.latestRate,
     })),
+  );
+}
+
+function renderFindings() {
+  const routineRates = analysis.routineProfiles.map((item) => item.latestRate);
+  const repetitionRates = analysis.repetitionProfiles.map((item) => item.latestRate);
+  const persistentAcrossFiveDays = analysis.routineProfiles.reduce(
+    (sum, item) => sum + item.persistentTitles.length,
+    0,
+  );
+  const persistentAcrossRuns = analysis.repetitionProfiles.reduce(
+    (sum, item) => sum + item.persistentTitles.length,
+    0,
+  );
+
+  const summary = [
+    `<strong>Day-over-day continuity is profile-specific.</strong> Synthetic Day 5 title overlap ranges from ${formatPercent(Math.min(...routineRates))} to ${formatPercent(Math.max(...routineRates))}; the median is ${formatPercent(analysis.headline.routineLatestMedianRate)}.`,
+    `<strong>Exact-clip recurrence separates low and high controlled profiles.</strong> Run 3 ranges from ${formatPercent(Math.min(...repetitionRates))} to ${formatPercent(Math.max(...repetitionRates))}, with a ${analysis.headline.repetitionSpreadPoints.toFixed(0)}-point spread.`,
+    `<strong>Adjacent continuity did not become permanent catalog lock-in.</strong> ${persistentAcrossFiveDays === 0 ? "No fictional title appeared in every Top-50 window across all five days." : `${persistentAcrossFiveDays} profile-title combinations appeared across all five daily Top-50 windows.`} Across the controlled study, ${persistentAcrossRuns} profile-title combinations appeared in all three runs.`,
+    `<strong>RFY explains only part of the visible stream.</strong> Among the first 30 Synthetic Day 5 recommendations, profile-level alignment with the separate 30-title RFY rail ranges from ${formatPercent(analysis.headline.rfyMinRate)} to ${formatPercent(analysis.headline.rfyMaxRate)}.`,
+  ];
+  document.querySelector("#findingsExecutiveSummary").innerHTML = summary
+    .map((item) => `<p>${item}</p>`)
+    .join("");
+
+  metricStrip("#findingsMetrics", [
+    [`${formatPercent(Math.min(...routineRates))}–${formatPercent(Math.max(...routineRates))}`, "Day 5 title overlap"],
+    [`${formatPercent(Math.min(...repetitionRates))}–${formatPercent(Math.max(...repetitionRates))}`, "Run 3 exact-clip recurrence"],
+    [`${formatPercent(analysis.headline.rfyMinRate)}–${formatPercent(analysis.headline.rfyMaxRate)}`, "RFY alignment"],
+    [persistentAcrossFiveDays, "Five-day persistent profile-title pairs"],
+  ]);
+
+  document.querySelector("#findingsRfyChart").replaceChildren(
+    ...analysis.rfyProfiles.map((item) =>
+      reportBar(
+        profileShortLabel(item.profileLabel),
+        item.rate,
+        `${item.matchingAppearances} of ${item.shortsWindow}`,
+      ),
+    ),
+  );
+  document.querySelector("#findingsRfyDetail").replaceChildren(
+    ...analysis.rfyProfiles.map((item) => {
+      const card = element("article", "report-detail-card");
+      card.innerHTML = `
+        <p class="eyebrow">${escapeHtml(profileShortLabel(item.profileLabel))}</p>
+        <strong>${item.matchingAppearances} / ${item.shortsWindow}</strong>
+        <span>recommendations match ${item.distinctMatchingTitles} distinct RFY titles</span>
+        <p>${item.matchingPositions.length
+          ? item.matchingPositions
+            .map((position) => `${escapeHtml(position.title)} · Short #${position.shortsPosition} / RFY #${position.rfyPosition}`)
+            .join("<br>")
+          : "No title alignment in the configured window."}</p>`;
+      return card;
+    }),
+  );
+
+  document.querySelector("#findingsRepeatProfiles").replaceChildren(
+    ...analysis.repetitionProfiles.map((item) => {
+      const card = element("article", "report-profile-card");
+      const progression = item.progressive
+        .map((run) => `<span><b>R${run.run}</b>${formatPercent(run.rate)}</span>`)
+        .join("");
+      card.innerHTML = `
+        <p class="eyebrow">${escapeHtml(profileShortLabel(item.profileLabel))}</p>
+        <strong>${formatPercent(item.latestRate)}</strong>
+        <span>Run 3 exact-clip recurrence</span>
+        <div class="mini-progression">${progression}</div>
+        <p>${item.cumulativeUniqueClips} cumulative unique clips across 60 appearances.</p>`;
+      return card;
+    }),
+  );
+  document.querySelector("#findingsRepeatTables").replaceChildren(
+    ...analysis.repetitionProfiles.map((profile) =>
+      reportTableBlock(
+        profileShortLabel(profile.profileLabel),
+        ["Rank", "Recurring exact clip", "Frequency", "When shown"],
+        profile.topRecurringClips.map((item, index) => [
+          String(index + 1),
+          `${item.title} · ${item.clipId}`,
+          `${item.appearances}× / ${item.runCount} runs`,
+          formatRunPositions(item.positions),
+        ]),
+      ),
+    ),
+  );
+  const persistenceRows = analysis.repetitionTitleLeaders.map((item, index) => [
+    String(index + 1),
+    profileShortLabel(item.profileLabel),
+    item.title,
+    `${item.appearances}× / ${item.runCount} runs`,
+    formatRunPositions(item.positions),
+  ]);
+  const persistenceTarget = document.querySelector("#findingsRepeatPersistence");
+  persistenceTarget.replaceChildren(
+    persistenceRows.length
+      ? reportTable(
+        ["Rank", "Profile", "Persistent title", "Frequency", "Run positions"],
+        persistenceRows,
+      )
+      : emptyFinding("No fictional title appeared in all three controlled runs."),
+  );
+
+  document.querySelector("#findingsContinuityProfiles").replaceChildren(
+    ...analysis.routineProfiles.map((item) => {
+      const card = element("article", "report-profile-card");
+      const comparisons = item.anchorComparisons
+        .map(
+          (comparison) => `
+            <div class="mini-bar">
+              <span>${comparison.lookbackDays}d</span>
+              <i><b style="width:${comparison.rate * 100}%"></b></i>
+              <em>${formatPercent(comparison.rate)}</em>
+            </div>`,
+        )
+        .join("");
+      card.innerHTML = `
+        <p class="eyebrow">${escapeHtml(profileShortLabel(item.profileLabel))}</p>
+        <strong>${formatPercent(item.latestRate)}</strong>
+        <span>one-day title overlap</span>
+        <div class="mini-bars">${comparisons}</div>
+        <p>Day 5 compared with each earlier Top-50 window.</p>`;
+      return card;
+    }),
+  );
+  document.querySelector("#findingsContinuityTables").replaceChildren(
+    ...analysis.routineProfiles.map((profile) => {
+      const exact = profile.persistentTitles;
+      const rows = exact.length ? exact : profile.nearestPersistentTitles;
+      const block = reportTableBlock(
+        profileShortLabel(profile.profileLabel),
+        ["Rank", "Title", "Days present", "Appearances", "Daily positions"],
+        rows.map((item, index) => [
+          String(index + 1),
+          item.title,
+          `${item.dayCount} / ${config.routine.days}`,
+          `${item.appearances}×`,
+          formatDayPositions(item.positions),
+        ]),
+      );
+      if (!exact.length) {
+        const note = element("p", "empty-note");
+        note.textContent = "No title appeared in all five days. Closest persistent titles are shown below.";
+        block.insertBefore(note, block.querySelector(".report-table-wrap"));
+      }
+      return block;
+    }),
+  );
+
+  document.querySelector("#findingsLimitations").replaceChildren(
+    ...analysis.limitations.map((limitation) => {
+      const item = document.createElement("li");
+      item.textContent = limitation;
+      return item;
+    }),
   );
 }
 
@@ -385,6 +552,69 @@ function renderBarChart(selector, values) {
       return row;
     }),
   );
+}
+
+function reportBar(label, value, detail) {
+  const row = element("div", "report-bar-row");
+  row.innerHTML = `
+    <span>${escapeHtml(label)}</span>
+    <i><b style="width:${value * 100}%"></b></i>
+    <strong>${formatPercent(value)}</strong>
+    <small>${escapeHtml(detail)}</small>`;
+  return row;
+}
+
+function reportTableBlock(title, headers, rows) {
+  const block = element("section", "report-table-block");
+  const heading = document.createElement("h4");
+  heading.textContent = title;
+  block.append(heading, rows.length ? reportTable(headers, rows) : emptyFinding("No qualifying records."));
+  return block;
+}
+
+function reportTable(headers, rows) {
+  const wrap = element("div", "report-table-wrap");
+  const table = document.createElement("table");
+  const head = document.createElement("thead");
+  const headRow = document.createElement("tr");
+  headers.forEach((header) => {
+    const cell = document.createElement("th");
+    cell.scope = "col";
+    cell.textContent = header;
+    headRow.append(cell);
+  });
+  head.append(headRow);
+  const body = document.createElement("tbody");
+  rows.forEach((row) => {
+    const tableRow = document.createElement("tr");
+    row.forEach((value) => {
+      const cell = document.createElement("td");
+      cell.textContent = value;
+      tableRow.append(cell);
+    });
+    body.append(tableRow);
+  });
+  table.append(head, body);
+  wrap.append(table);
+  return wrap;
+}
+
+function emptyFinding(message) {
+  const note = element("p", "empty-note");
+  note.textContent = message;
+  return note;
+}
+
+function formatRunPositions(positions) {
+  return positions.map((item) => `R${item.run} #${item.position}`).join(" · ");
+}
+
+function formatDayPositions(positions) {
+  return positions.map((item) => `Day ${item.day} #${item.position}`).join(" · ");
+}
+
+function profileShortLabel(label) {
+  return label.split(" — ").at(-1);
 }
 
 function populateSelect(selector, items, valueKey, labelKey) {

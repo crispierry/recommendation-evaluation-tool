@@ -18,8 +18,9 @@ const clipById = new Map(catalog.clips.map((clip) => [clip.id, clip]));
 const titleById = new Map(catalog.titles.map((title) => [title.id, title]));
 const routine = buildRoutineRuns(config, catalog, rng);
 const repetition = buildRepetitionRuns(config, catalog, rng);
+const rfy = buildRfyRuns(config, catalog, routine, rng);
 const reviewCases = buildReviewCases(config, routine, repetition, clipById, titleById);
-const analysis = buildAnalysis(config, catalog, routine, repetition, reviewCases);
+const analysis = buildAnalysis(config, catalog, routine, repetition, rfy, reviewCases);
 
 await mkdir(path.join(outputRoot, "data"), { recursive: true });
 await mkdir(path.join(outputRoot, "assets", "posters"), { recursive: true });
@@ -33,6 +34,7 @@ await writeJson(path.join(outputRoot, "data", "config.json"), {
 await writeJson(path.join(outputRoot, "data", "catalog.json"), catalog);
 await writeJson(path.join(outputRoot, "data", "routine-runs.json"), routine);
 await writeJson(path.join(outputRoot, "data", "repetition-runs.json"), repetition);
+await writeJson(path.join(outputRoot, "data", "rfy-runs.json"), rfy);
 await writeJson(path.join(outputRoot, "data", "review-cases.json"), reviewCases);
 await writeJson(path.join(outputRoot, "data", "analysis.json"), analysis);
 
@@ -64,12 +66,13 @@ const manifest = {
   schemaVersion: "synthetic-public-artifact-manifest/v1",
   synthetic: true,
   configDigest: digestJson(config),
-  dataDigest: digestJson({ catalog, routine, repetition, reviewCases, analysis }),
+  dataDigest: digestJson({ catalog, routine, repetition, rfy, reviewCases, analysis }),
   counts: {
     titles: catalog.titles.length,
     canonicalClips: catalog.clips.length,
     routineAppearances: routine.appearances.length,
     repetitionAppearances: repetition.appearances.length,
+    rfyTitles: rfy.rails.length,
     renderedPosters: catalog.titles.length,
     renderedScreens: usedClipIds.size,
     reviewCases: reviewCases.cases.length,
@@ -79,6 +82,7 @@ const manifest = {
     "data/catalog.json",
     "data/routine-runs.json",
     "data/repetition-runs.json",
+    "data/rfy-runs.json",
     "data/review-cases.json",
     "data/analysis.json",
   ],
@@ -265,6 +269,52 @@ function buildRepetitionRuns(settings, catalogData, random) {
   };
 }
 
+function buildRfyRuns(settings, catalogData, routineData, random) {
+  const rails = [];
+  const anchorDay = settings.routine.days;
+  const catalogTitleIds = catalogData.titles.map((title) => title.id);
+
+  for (const rfyProfile of settings.rfy.profiles) {
+    const profile = settings.routine.profiles.find((item) => item.id === rfyProfile.profileId);
+    const shorts = routineData.appearances
+      .filter((item) => item.profileId === rfyProfile.profileId && item.dayOrdinal === anchorDay)
+      .sort((left, right) => left.position - right.position)
+      .slice(0, settings.rfy.shortsWindow);
+    const shortsTitleIds = new Set(shorts.map((item) => item.titleId));
+    const alignmentCount = Math.round(settings.rfy.shortsWindow * rfyProfile.alignmentRate);
+    const aligned = sample([...shortsTitleIds], alignmentCount, random);
+    const alignedSet = new Set(aligned);
+    const unrelated = catalogTitleIds.filter((titleId) => !shortsTitleIds.has(titleId));
+    const selected = [
+      ...aligned,
+      ...sample(unrelated, settings.rfy.titlesPerProfile - aligned.length, random),
+    ];
+    shuffle(selected, random);
+    selected.forEach((titleId, index) => {
+      rails.push({
+        id: `rfy-${rfyProfile.profileId}-p${index + 1}`,
+        synthetic: true,
+        profileId: rfyProfile.profileId,
+        profileLabel: profile.label,
+        dayOrdinal: anchorDay,
+        position: index + 1,
+        titleId,
+        alignsWithShortsWindow: alignedSet.has(titleId),
+      });
+    });
+  }
+
+  return {
+    schemaVersion: "synthetic-rfy-runs/v1",
+    synthetic: true,
+    anchorDay,
+    titlesPerProfile: settings.rfy.titlesPerProfile,
+    shortsWindow: settings.rfy.shortsWindow,
+    profiles: settings.rfy.profiles,
+    rails,
+  };
+}
+
 function buildReviewCases(settings, routineData, repetitionData, clipMap, titleMap) {
   const source = [...routineData.appearances.slice(7, 13), ...repetitionData.appearances.slice(22, 25)];
   const issueTypes = [
@@ -299,7 +349,8 @@ function buildReviewCases(settings, routineData, repetitionData, clipMap, titleM
   };
 }
 
-function buildAnalysis(settings, catalogData, routineData, repetitionData, reviewData) {
+function buildAnalysis(settings, catalogData, routineData, repetitionData, rfyData, reviewData) {
+  const titleById = new Map(catalogData.titles.map((title) => [title.id, title]));
   const routineProfiles = settings.routine.profiles.map((profile) => {
     const daily = [];
     for (let day = 2; day <= settings.routine.days; day += 1) {
@@ -320,6 +371,46 @@ function buildAnalysis(settings, catalogData, routineData, repetitionData, revie
         rate: round(overlap / current.length),
       });
     }
+    const anchorDay = settings.routine.days;
+    const anchorItems = routineData.appearances.filter(
+      (item) => item.profileId === profile.id && item.dayOrdinal === anchorDay,
+    );
+    const anchorComparisons = [];
+    for (let comparisonDay = anchorDay - 1; comparisonDay >= 1; comparisonDay -= 1) {
+      const comparisonTitles = new Set(
+        routineData.appearances
+          .filter((item) => item.profileId === profile.id && item.dayOrdinal === comparisonDay)
+          .map((item) => item.titleId),
+      );
+      const overlap = anchorItems.filter((item) => comparisonTitles.has(item.titleId)).length;
+      anchorComparisons.push({
+        lookbackDays: anchorDay - comparisonDay,
+        comparisonDay,
+        overlap,
+        denominator: anchorItems.length,
+        rate: round(overlap / anchorItems.length),
+      });
+    }
+    const groupedTitles = groupBy(
+      routineData.appearances.filter((item) => item.profileId === profile.id),
+      (item) => item.titleId,
+    );
+    const titlePersistence = [...groupedTitles.entries()]
+      .map(([titleId, items]) => ({
+        titleId,
+        title: titleById.get(titleId).title,
+        dayCount: new Set(items.map((item) => item.dayOrdinal)).size,
+        appearances: items.length,
+        positions: items
+          .sort((left, right) => left.dayOrdinal - right.dayOrdinal || left.position - right.position)
+          .map((item) => ({ day: item.dayOrdinal, position: item.position })),
+      }))
+      .sort(
+        (left, right) =>
+          right.dayCount - left.dayCount ||
+          right.appearances - left.appearances ||
+          left.title.localeCompare(right.title),
+      );
     return {
       profileId: profile.id,
       profileLabel: profile.label,
@@ -327,6 +418,13 @@ function buildAnalysis(settings, catalogData, routineData, repetitionData, revie
       daily,
       meanRate: round(mean(daily.map((item) => item.rate))),
       latestRate: daily.at(-1).rate,
+      anchorComparisons,
+      persistentTitles: titlePersistence
+        .filter((item) => item.dayCount === settings.routine.days)
+        .slice(0, 5),
+      nearestPersistentTitles: titlePersistence
+        .filter((item) => item.dayCount < settings.routine.days && item.dayCount >= 2)
+        .slice(0, 5),
     };
   });
 
@@ -347,6 +445,50 @@ function buildAnalysis(settings, catalogData, routineData, repetitionData, revie
       });
       current.forEach((item) => seen.add(item.clipId));
     }
+    const groupedClips = groupBy(
+      repetitionData.appearances.filter((item) => item.profileId === profile.id),
+      (item) => item.clipId,
+    );
+    const topRecurringClips = [...groupedClips.entries()]
+      .filter(([, items]) => items.length > 1)
+      .map(([clipId, items]) => ({
+        clipId,
+        titleId: items[0].titleId,
+        title: titleById.get(items[0].titleId).title,
+        appearances: items.length,
+        runCount: new Set(items.map((item) => item.run)).size,
+        positions: items
+          .sort((left, right) => left.run - right.run || left.position - right.position)
+          .map((item) => ({ run: item.run, position: item.position })),
+      }))
+      .sort(
+        (left, right) =>
+          right.appearances - left.appearances ||
+          right.runCount - left.runCount ||
+          left.title.localeCompare(right.title) ||
+          left.clipId.localeCompare(right.clipId),
+      )
+      .slice(0, 5);
+    const groupedTitles = groupBy(
+      repetitionData.appearances.filter((item) => item.profileId === profile.id),
+      (item) => item.titleId,
+    );
+    const persistentTitles = [...groupedTitles.entries()]
+      .map(([titleId, items]) => ({
+        titleId,
+        title: titleById.get(titleId).title,
+        appearances: items.length,
+        runCount: new Set(items.map((item) => item.run)).size,
+        positions: items
+          .sort((left, right) => left.run - right.run || left.position - right.position)
+          .map((item) => ({ run: item.run, position: item.position })),
+      }))
+      .filter((item) => item.runCount === settings.repetition.runs)
+      .sort(
+        (left, right) =>
+          right.appearances - left.appearances || left.title.localeCompare(right.title),
+      )
+      .slice(0, 5);
     return {
       profileId: profile.id,
       profileLabel: profile.label,
@@ -354,6 +496,60 @@ function buildAnalysis(settings, catalogData, routineData, repetitionData, revie
       progressive,
       latestRate: progressive.at(-1).rate,
       cumulativeUniqueClips: seen.size,
+      topRecurringClips,
+      persistentTitles,
+    };
+  });
+
+  const repetitionTitleLeaders = [...new Map(
+    repetitionProfiles
+      .flatMap((profile) =>
+        profile.persistentTitles.map((item) => ({
+          ...item,
+          profileId: profile.profileId,
+          profileLabel: profile.profileLabel,
+        })),
+      )
+      .map((item) => [`${item.profileId}:${item.titleId}`, item]),
+  ).values()]
+    .sort(
+      (left, right) =>
+        right.appearances - left.appearances ||
+        left.title.localeCompare(right.title) ||
+        left.profileLabel.localeCompare(right.profileLabel),
+    )
+    .slice(0, 5);
+
+  const rfyProfiles = settings.rfy.profiles.map((rfyProfile) => {
+    const profile = settings.routine.profiles.find((item) => item.id === rfyProfile.profileId);
+    const shorts = routineData.appearances
+      .filter(
+        (item) =>
+          item.profileId === rfyProfile.profileId &&
+          item.dayOrdinal === rfyData.anchorDay &&
+          item.position <= rfyData.shortsWindow,
+      )
+      .sort((left, right) => left.position - right.position);
+    const rail = rfyData.rails
+      .filter((item) => item.profileId === rfyProfile.profileId)
+      .sort((left, right) => left.position - right.position);
+    const railTitleIds = new Set(rail.map((item) => item.titleId));
+    const matching = shorts.filter((item) => railTitleIds.has(item.titleId));
+    return {
+      profileId: profile.id,
+      profileLabel: profile.label,
+      dayOrdinal: rfyData.anchorDay,
+      shortsWindow: rfyData.shortsWindow,
+      railSize: rail.length,
+      matchingAppearances: matching.length,
+      distinctMatchingTitles: new Set(matching.map((item) => item.titleId)).size,
+      rate: round(matching.length / shorts.length),
+      matchingPositions: matching.map((item) => ({
+        shortsPosition: item.position,
+        rfyPosition: rail.find((railItem) => railItem.titleId === item.titleId).position,
+        titleId: item.titleId,
+        title: titleById.get(item.titleId).title,
+      })),
     };
   });
 
@@ -372,6 +568,8 @@ function buildAnalysis(settings, catalogData, routineData, repetitionData, revie
         "For each current appearance, whether its title appears anywhere in the same profile's prior synthetic day's first 50 positions.",
       repetitionRecurrence:
         "For each appearance after Run 1, whether the same canonical clip ID appeared in any earlier run for that repetition profile.",
+      rfyAlignment:
+        "Among each routine profile's first 30 recommendations on Synthetic Day 5, whether the title appears anywhere in that profile's 30-title synthetic RFY rail.",
     },
     counts: {
       catalogTitles: catalogData.titles.length,
@@ -385,6 +583,8 @@ function buildAnalysis(settings, catalogData, routineData, repetitionData, revie
     },
     routineProfiles,
     repetitionProfiles,
+    repetitionTitleLeaders,
+    rfyProfiles,
     headline: {
       routineSpreadPoints: round(
         (Math.max(...routineProfiles.map((item) => item.meanRate)) -
@@ -400,12 +600,17 @@ function buildAnalysis(settings, catalogData, routineData, repetitionData, revie
       ),
       titleCoverageRate: round(exposedTitles.size / catalogData.titles.length),
       clipCoverageRate: round(exposedClips.size / catalogData.clips.length),
+      routineLatestMedianRate: round(median(routineProfiles.map((item) => item.latestRate))),
+      repetitionLatestMedianRate: round(median(repetitionProfiles.map((item) => item.latestRate))),
+      rfyMinRate: Math.min(...rfyProfiles.map((item) => item.rate)),
+      rfyMaxRate: Math.max(...rfyProfiles.map((item) => item.rate)),
     },
     limitations: [
       "The data is generated from configured behavior bands and does not describe real viewers or a production ranking system.",
       "Five synthetic days and three controlled runs illustrate an evaluation method; they do not establish population-level performance.",
       "Observed delivery patterns do not reveal ranking intent, model features, or causal drivers.",
       "Routine title overlap and repetition exact-clip recurrence use different grains and must not be combined.",
+      "RFY alignment is a configured synthetic comparison between two generated surfaces, not evidence of a production retrieval or ranking relationship.",
     ],
   };
 }
@@ -484,6 +689,21 @@ function validateConfig(settings) {
   if (settings.repetition.profiles.length !== 3 || settings.repetition.runs !== 3 || settings.repetition.clipsPerRun !== 20) {
     throw new Error("Repetition public run must be 3 profiles × 3 runs × 20 clips.");
   }
+  if (
+    settings.rfy.titlesPerProfile !== 30 ||
+    settings.rfy.shortsWindow !== 30 ||
+    settings.rfy.profiles.length !== settings.routine.profiles.length
+  ) {
+    throw new Error("RFY public comparison must be 3 profiles × 30 rail titles × first 30 recommendations.");
+  }
+  for (const profile of settings.rfy.profiles) {
+    if (!settings.routine.profiles.some((item) => item.id === profile.profileId)) {
+      throw new Error(`RFY profile ${profile.profileId} must reference a routine profile.`);
+    }
+    if (profile.alignmentRate < 0 || profile.alignmentRate > 1) {
+      throw new Error(`RFY alignment for ${profile.profileId} must be between 0 and 1.`);
+    }
+  }
 }
 
 function parseArgs(values) {
@@ -536,6 +756,14 @@ function groupBy(items, keyFor) {
 
 function mean(values) {
   return values.reduce((sum, value) => sum + value, 0) / values.length;
+}
+
+function median(values) {
+  const ordered = [...values].sort((left, right) => left - right);
+  const middle = Math.floor(ordered.length / 2);
+  return ordered.length % 2
+    ? ordered[middle]
+    : (ordered[middle - 1] + ordered[middle]) / 2;
 }
 
 function round(value, precision = 4) {
