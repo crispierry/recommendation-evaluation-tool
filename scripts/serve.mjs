@@ -37,6 +37,5 @@ function contentType(file) {
   if (file.endsWith(".json")) return "application/json";
   if (file.endsWith(".webp")) return "image/webp";
   if (file.endsWith(".png")) return "image/png";
-  if (file.endsWith(".docx")) return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
   return "application/octet-stream";
 }

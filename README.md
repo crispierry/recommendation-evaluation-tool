@@ -20,6 +20,7 @@ Everything in the repository is generated:
 - 500 fictional titles
 - 2,000 fictional canonical clips, with 3–5 clips per title
 - fictional profiles and ordered recommendations
+- fictional 30-title RFY rails for cross-surface comparison
 - fictional poster art and vertical screen captures
 - a small fictional human-review queue
 
@@ -40,8 +41,8 @@ npm run audit:public
 ```
 
 The main settings are catalog size, clips per title, seed, routine profile
-strategies, days, clips per profile per day, repetition profile strategies,
-runs, and clips per run.
+strategies, days, clips per profile per day, RFY rail size and alignment bands,
+repetition profile strategies, runs, and clips per run.
 
 ## Public surface
 
@@ -52,14 +53,17 @@ The built static application contains:
 - Unique Clips
 - Content Issues
 - Analytics
+- Findings Report
 - Review Center
 
-Review Center decisions are stored only in the visitor's browser and can be
-reset. They do not alter the frozen report.
+The Findings Report is a native web page inside the tool and is computed from
+the same frozen data as the interactive views. Review Center decisions are
+stored only in the visitor's browser and can be reset. They do not alter the
+frozen report.
 
 ## Reproducibility
 
 `npm run verify` regenerates the complete static bundle and checks counts,
 referential integrity, deterministic analysis, offline behavior, and the
-public-release boundary. The report generator reads the same `analysis.json`
-used by the website.
+public-release boundary. The web report reads the same `analysis.json` used by
+the interactive analytics view.

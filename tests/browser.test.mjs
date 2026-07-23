@@ -45,6 +45,13 @@ test("dashboard works at desktop and mobile widths without network dependencies"
         await page.getByRole("button", { name: tab, exact: true }).click();
         await page.getByRole("heading", { name: tab, exact: true }).waitFor();
       }
+      await page.getByRole("button", { name: "Findings Report", exact: true }).click();
+      await page.getByRole("heading", { name: "What the synthetic feed evaluation found", exact: true }).waitFor();
+      assert.equal(await page.locator("#findingsRepeatTables table").count(), 3);
+      assert.equal(await page.locator("#findingsContinuityTables table").count(), 3);
+      assert.equal(await page.locator("#findingsRfyChart .report-bar-row").count(), 3);
+      assert.match(await page.locator("#findingsExecutiveSummary").innerText(), /RFY explains only part/);
+      await page.getByRole("button", { name: "Review Center", exact: true }).click();
       assert.equal(await page.locator("#reviewList .review-card").count(), 9);
       const dimensions = await page.evaluate(() => ({
         scrollWidth: document.documentElement.scrollWidth,
@@ -66,6 +73,5 @@ function contentType(file) {
   if (file.endsWith(".js")) return "text/javascript; charset=utf-8";
   if (file.endsWith(".json")) return "application/json";
   if (file.endsWith(".webp")) return "image/webp";
-  if (file.endsWith(".docx")) return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
   return "application/octet-stream";
 }

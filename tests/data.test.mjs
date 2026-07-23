@@ -13,10 +13,11 @@ const dist = path.join(root, "dist");
 const readJson = async (relative) => JSON.parse(await readFile(path.join(dist, relative), "utf8"));
 
 test("public run has the exact requested shape", async () => {
-  const [catalog, routine, repetition, review, analysis] = await Promise.all([
+  const [catalog, routine, repetition, rfy, review, analysis] = await Promise.all([
     readJson("data/catalog.json"),
     readJson("data/routine-runs.json"),
     readJson("data/repetition-runs.json"),
+    readJson("data/rfy-runs.json"),
     readJson("data/review-cases.json"),
     readJson("data/analysis.json"),
   ]);
@@ -37,6 +38,10 @@ test("public run has the exact requested shape", async () => {
   assert.equal(repetition.profiles.length, 3);
   assert.equal(repetition.runs, 3);
   assert.equal(repetition.appearances.length, 180);
+  assert.equal(rfy.profiles.length, 3);
+  assert.equal(rfy.titlesPerProfile, 30);
+  assert.equal(rfy.shortsWindow, 30);
+  assert.equal(rfy.rails.length, 90);
   assert.equal(review.cases.length, 9);
   assert.equal(analysis.counts.totalAppearances, 930);
 
@@ -68,6 +73,14 @@ test("computed profile behavior matches the configured bands", async () => {
   assert.ok(routineRates[2] >= 0.5 && routineRates[2] <= 0.6);
   const repeatRates = analysis.repetitionProfiles.map((item) => item.latestRate);
   assert.deepEqual(repeatRates, [0.15, 0.35, 0.55]);
+  assert.deepEqual(analysis.rfyProfiles.map((item) => item.rate), [0.2, 0.3333, 0.4667]);
+  assert.equal(analysis.repetitionProfiles.every((item) => item.topRecurringClips.length === 5), true);
+  assert.equal(
+    analysis.routineProfiles.every(
+      (item) => item.anchorComparisons.length === 4 && item.nearestPersistentTitles.length > 0,
+    ),
+    true,
+  );
 });
 
 test("generation is deterministic for data and representative raster assets", async () => {
@@ -78,6 +91,7 @@ test("generation is deterministic for data and representative raster assets", as
       "data/catalog.json",
       "data/routine-runs.json",
       "data/repetition-runs.json",
+      "data/rfy-runs.json",
       "data/review-cases.json",
       "data/analysis.json",
       "assets/posters/title-001.webp",
