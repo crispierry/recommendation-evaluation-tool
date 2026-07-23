@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
+    <title>Short-Form Recommendation Evaluation Lab</title>
+    <meta name="description" content="A deterministic synthetic lab for evaluating recommendation continuity, exact-clip recurrence, catalog coverage, and review workflows.">
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">REL</span>
+        <div>
+          <strong>Recommendation Evaluation Lab</strong>
+          <span>Deterministic synthetic public run</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <span class="synthetic-badge">100% synthetic</span>
+        <a href="./short-form-recommendation-evaluation-report.docx" download>Download analysis</a>
+      </div>
+    </header>
+
+    <nav class="tab-nav" aria-label="Evaluation views">
+      <button type="button" data-view="history" aria-selected="true">Clip History</button>
+      <button type="button" data-view="repetition" aria-selected="false">Repetition Run</button>
+      <button type="button" data-view="catalog" aria-selected="false">Unique Clips</button>
+      <button type="button" data-view="issues" aria-selected="false">Content Issues</button>
+      <button type="button" data-view="analytics" aria-selected="false">Analytics</button>
+      <button type="button" data-view="review" aria-selected="false">Review Center</button>
+    </nav>
+
+    <main id="main">
+      <section class="view is-active" data-panel="history">
+        <div class="page-head">
+          <div>
+            <p class="eyebrow">Routine evaluation</p>
+            <h1>Clip History</h1>
+            <p>Inspect the first 50 ordered recommendations for each profile and synthetic day.</p>
+          </div>
+          <div class="controls">
+            <label>Profile<select id="historyProfile"></select></label>
+            <label>Day<select id="historyDay"></select></label>
+            <fieldset>
+              <legend>Artwork</legend>
+              <label><input type="radio" name="historyImage" value="poster" checked>Poster</label>
+              <label><input type="radio" name="historyImage" value="screen">Capture</label>
+            </fieldset>
+          </div>
+        </div>
+        <div class="comparison-bar">
+          <label><input id="historyCompare" type="checkbox"> Highlight titles also present on the prior synthetic day</label>
+          <output id="historyComparisonStatus">Comparison off</output>
+        </div>
+        <div id="historySummary" class="metric-strip"></div>
+        <div id="historyRail" class="poster-grid" aria-live="polite"></div>
+      </section>
+
+      <section class="view" data-panel="repetition" hidden>
+        <div class="page-head">
+          <div>
+            <p class="eyebrow">Controlled evaluation</p>
+            <h1>Repetition Run</h1>
+            <p>Measure whether the same canonical clip returns across three independent 20-position runs.</p>
+          </div>
+          <div class="controls">
+            <label>Profile<select id="repeatProfile"></select></label>
+            <label>Run<select id="repeatRun"></select></label>
+            <fieldset>
+              <legend>Show</legend>
+              <label><input type="radio" name="repeatShow" value="new" checked>New</label>
+              <label><input type="radio" name="repeatShow" value="repeats">Repeats</label>
+            </fieldset>
+          </div>
+        </div>
+        <div id="repeatSummary" class="metric-strip"></div>
+        <div id="repeatRail" class="poster-grid repetition-grid" aria-live="polite"></div>
+      </section>
+
+      <section class="view" data-panel="catalog" hidden>
+        <div class="page-head">
+          <div>
+            <p class="eyebrow">Canonical title index</p>
+            <h1>Unique Clips</h1>
+            <p>Explore all 500 fictional titles and the 2,000 canonical clips defined for this run.</p>
+          </div>
+          <div class="controls">
+            <label>Search<input id="catalogSearch" type="search" placeholder="Search fictional titles"></label>
+            <label>Sort<select id="catalogSort"><option value="title">Title</option><option value="clips">Clip count</option><option value="exposure">Observed appearances</option></select></label>
+          </div>
+        </div>
+        <div id="catalogSummary" class="metric-strip"></div>
+        <div id="catalogList" class="catalog-list"></div>
+      </section>
+
+      <section class="view" data-panel="issues" hidden>
+        <div class="page-head">
+          <div>
+            <p class="eyebrow">Quality monitoring</p>
+            <h1>Content Issues</h1>
+            <p>Nine intentionally injected synthetic cases demonstrate a reviewable quality workflow.</p>
+          </div>
+        </div>
+        <div id="issuesSummary" class="metric-strip"></div>
+        <div id="issuesGrid" class="issue-grid"></div>
+      </section>
+
+      <section class="view" data-panel="analytics" hidden>
+        <div class="page-head">
+          <div>
+            <p class="eyebrow">Computed findings</p>
+            <h1>Analytics</h1>
+            <p>Continuity and recurrence are calculated from the complete frozen selection.</p>
+          </div>
+          <button id="settingsToggle" class="secondary-button" type="button" aria-expanded="false">Run configuration</button>
+        </div>
+        <aside id="settingsPanel" class="settings-panel" hidden></aside>
+        <div id="analyticsMetrics" class="metric-strip"></div>
+        <div class="analysis-grid">
+          <section class="analysis-card">
+            <p class="eyebrow">Five synthetic days</p>
+            <h2>Title overlap by profile</h2>
+            <p>Current appearances whose fictional title exists anywhere in the prior day's first 50.</p>
+            <div id="routineChart" class="bar-chart"></div>
+          </section>
+          <section class="analysis-card">
+            <p class="eyebrow">Three controlled runs</p>
+            <h2>Exact-clip recurrence</h2>
+            <p>Current appearances whose canonical clip exists in any earlier run for that profile.</p>
+            <div id="repetitionChart" class="bar-chart"></div>
+          </section>
+        </div>
+        <section class="method-card">
+          <p class="eyebrow">Interpretation boundary</p>
+          <h2>Observed patterns are not causal explanations.</h2>
+          <p>The configured data demonstrates an evaluation method. It does not describe real viewers, ranking intent, model features, or production performance. Title overlap and exact-clip recurrence use different grains and are never combined.</p>
+        </section>
+      </section>
+
+      <section class="view" data-panel="review" hidden>
+        <div class="page-head">
+          <div>
+            <p class="eyebrow">Browser-local demonstration</p>
+            <h1>Review Center</h1>
+            <p>Resolve synthetic edge cases without network writes. Your choices stay in this browser and never change the published report.</p>
+          </div>
+          <button id="reviewReset" class="secondary-button" type="button">Reset decisions</button>
+        </div>
+        <div id="reviewSummary" class="metric-strip"></div>
+        <div id="reviewList" class="review-list"></div>
+      </section>
+    </main>
+
+    <dialog id="detailDialog">
+      <button class="dialog-close" type="button" aria-label="Close">×</button>
+      <div id="detailContent"></div>
+    </dialog>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

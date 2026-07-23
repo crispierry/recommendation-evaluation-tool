@@ -1,0 +1,63 @@
+{
+  "schemaVersion": "synthetic-recommendation-config/v1",
+  "seed": 20260723,
+  "catalog": {
+    "titleCount": 500,
+    "clipsPerTitle": {
+      "min": 3,
+      "max": 5
+    }
+  },
+  "routine": {
+    "days": 5,
+    "clipsPerProfilePerDay": 50,
+    "profiles": [
+      {
+        "id": "profile-a",
+        "label": "Profile A — Explorer",
+        "strategy": "Discovery-oriented",
+        "priorDayTitleOverlap": 0.26,
+        "exactClipCarryover": 0.2
+      },
+      {
+        "id": "profile-b",
+        "label": "Profile B — Balanced",
+        "strategy": "Balanced",
+        "priorDayTitleOverlap": 0.4,
+        "exactClipCarryover": 0.35
+      },
+      {
+        "id": "profile-c",
+        "label": "Profile C — Familiarity",
+        "strategy": "Familiarity-oriented",
+        "priorDayTitleOverlap": 0.56,
+        "exactClipCarryover": 0.5
+      }
+    ]
+  },
+  "repetition": {
+    "runs": 3,
+    "clipsPerRun": 20,
+    "profiles": [
+      {
+        "id": "profile-r1",
+        "label": "Profile R1 — Low recurrence",
+        "strategy": "Low recurrence",
+        "progressiveExactClipRecurrence": 0.15
+      },
+      {
+        "id": "profile-r2",
+        "label": "Profile R2 — Mixed recurrence",
+        "strategy": "Mixed recurrence",
+        "progressiveExactClipRecurrence": 0.35
+      },
+      {
+        "id": "profile-r3",
+        "label": "Profile R3 — High recurrence",
+        "strategy": "High recurrence",
+        "progressiveExactClipRecurrence": 0.55
+      }
+    ]
+  },
+  "reviewCaseCount": 9
+}

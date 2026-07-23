@@ -1,0 +1,23 @@
+{
+  "name": "recommendation-evaluation-lab",
+  "version": "1.0.0",
+  "private": false,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "generate": "node scripts/generate.mjs",
+    "build": "node scripts/build.mjs",
+    "preview": "node scripts/serve.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "audit:public": "node scripts/audit-public.mjs",
+    "verify": "npm run build && npm run test && npm run audit:public"
+  },
+  "dependencies": {
+    "sharp": "^0.35.3"
+  },
+  "devDependencies": {
+    "playwright": "1.61.1"
+  }
+}
