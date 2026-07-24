@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import sharp from "sharp";
@@ -617,22 +617,16 @@ function buildAnalysis(settings, catalogData, routineData, repetitionData, rfyDa
 
 async function renderPoster(title, destination) {
   await mkdir(path.dirname(destination), { recursive: true });
-  const [background, accent, ink] = title.palette;
-  const escaped = escapeXml(title.title);
-  const [line1, line2] = splitTitle(title.title);
-  const svg = `
-    <svg width="480" height="720" viewBox="0 0 480 720" xmlns="http://www.w3.org/2000/svg">
-      <rect width="480" height="720" fill="${background}"/>
-      <circle cx="${80 + (hashNumber(title.id) % 250)}" cy="${150 + (hashNumber(title.title) % 260)}" r="165" fill="${accent}" opacity="0.72"/>
-      <path d="M-40 560 C120 420 280 760 540 500 L540 760 L-40 760 Z" fill="${ink}" opacity="0.92"/>
-      <path d="M40 120 L420 620" stroke="${ink}" stroke-width="10" opacity="0.18"/>
-      <text x="42" y="64" fill="${ink}" font-family="Arial, sans-serif" font-size="15" letter-spacing="4">FICTIONAL TITLE</text>
-      <text x="42" y="520" fill="#fcfaf4" font-family="Georgia, serif" font-size="48">${escapeXml(line1)}</text>
-      <text x="42" y="576" fill="#fcfaf4" font-family="Georgia, serif" font-size="48">${escapeXml(line2)}</text>
-      <text x="42" y="668" fill="#fcfaf4" font-family="Arial, sans-serif" font-size="16" letter-spacing="2">${escapeXml(title.genre.toUpperCase())} · SYNTHETIC</text>
-      <title>${escaped}</title>
-    </svg>`;
-  await sharp(Buffer.from(svg)).webp({ quality: 78, effort: 4 }).toFile(destination);
+  const generatedArtwork = path.join(root, "art", "posters", `${title.id}.webp`);
+  try {
+    await copyFile(generatedArtwork, destination);
+    return;
+  } catch (error) {
+    if (error?.code === "ENOENT") {
+      throw new Error(`Missing generated poster artwork for ${title.id}: ${generatedArtwork}`);
+    }
+    throw error;
+  }
 }
 
 async function renderScreen(clip, title, destination) {
