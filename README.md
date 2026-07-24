@@ -33,6 +33,8 @@ scene brief in `config/poster-prompts.json`. The images contain no typography,
 logos, recognizable actors, or references to existing entertainment
 properties. `npm run audit:posters` verifies count, dimensions, exact
 uniqueness, visual complexity, and perceptual separation before release.
+The build keeps those 480×720 source assets intact and emits compact 200×300
+WebP thumbnails for the static tool.
 
 ## Published configuration
 

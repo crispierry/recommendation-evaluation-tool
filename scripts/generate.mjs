@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import sharp from "sharp";
@@ -619,7 +619,10 @@ async function renderPoster(title, destination) {
   await mkdir(path.dirname(destination), { recursive: true });
   const generatedArtwork = path.join(root, "art", "posters", `${title.id}.webp`);
   try {
-    await copyFile(generatedArtwork, destination);
+    await sharp(generatedArtwork)
+      .resize(200, 300, { fit: "cover", position: "attention" })
+      .webp({ quality: 38, effort: 6 })
+      .toFile(destination);
     return;
   } catch (error) {
     if (error?.code === "ENOENT") {
