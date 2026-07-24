@@ -71,7 +71,7 @@ test("dashboard works at desktop and mobile widths without network dependencies"
       await page.getByRole("button", { name: "Review Center", exact: true }).click();
       assert.equal(await page.locator("#reviewList .review-card").count(), 9);
       assert.match(await page.locator("#reviewList .review-card").first().locator(".review-poster").getAttribute("src"), /^assets\/posters\//);
-      assert.match(await page.locator("#reviewList .review-card").first().locator(".review-capture img").getAttribute("src"), /^assets\/screens\//);
+      assert.match(await page.locator("#reviewList .review-card").first().locator(".review-capture img").getAttribute("src"), /^assets\/review-evidence\//);
       const dimensions = await page.evaluate(() => ({
         scrollWidth: document.documentElement.scrollWidth,
         clientWidth: document.documentElement.clientWidth,
