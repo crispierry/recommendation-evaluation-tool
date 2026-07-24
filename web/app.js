@@ -504,17 +504,18 @@ function posterCard(item, title, clip, image, flags = {}) {
       <small>Position ${item.position} · ${escapeHtml(clip.sceneLabel)}</small>
       <strong>${escapeHtml(title.title)}</strong>
     </span>`;
-  card.addEventListener("click", () => showDetail(item, title, clip));
+  card.addEventListener("click", () => showDetail(item, title, clip, image));
   return card;
 }
 
-function showDetail(item, title, clip) {
+function showDetail(item, title, clip, image) {
   const dialog = document.querySelector("#detailDialog");
   const content = document.querySelector("#detailContent");
+  const isPoster = image === title.posterPath;
   content.innerHTML = `<div class="detail-layout">
-    <img src="${clip.screenPath}" alt="Synthetic vertical capture for ${escapeHtml(title.title)}">
+    <img src="${image}" alt="${isPoster ? "Fictional poster artwork" : "Synthetic vertical capture"} for ${escapeHtml(title.title)}">
     <div class="detail-copy">
-      <p class="eyebrow">Synthetic canonical clip</p>
+      <p class="eyebrow">${isPoster ? "Fictional title artwork" : "Synthetic canonical clip"}</p>
       <h2>${escapeHtml(title.title)}</h2>
       <p>${escapeHtml(clip.sceneLabel)} is one of ${title.clipCount} fictional clips associated with this title.</p>
       <dl>

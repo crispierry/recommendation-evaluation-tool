@@ -41,6 +41,20 @@ test("dashboard works at desktop and mobile widths without network dependencies"
       await page.goto(`http://127.0.0.1:${port}`, { waitUntil: "networkidle" });
       await page.getByRole("heading", { name: "Clip History" }).waitFor();
       assert.equal(await page.locator("#historyRail .poster-card").count(), 50);
+      const firstCard = page.locator("#historyRail .poster-card").first();
+      const posterSource = await firstCard.locator("img").getAttribute("src");
+      await firstCard.click();
+      assert.equal(await page.locator("#detailContent img").getAttribute("src"), posterSource);
+      assert.equal(await page.locator("#detailContent .eyebrow").innerText(), "FICTIONAL TITLE ARTWORK");
+      await page.locator("#detailDialog .dialog-close").click();
+      await page.getByLabel("Capture", { exact: true }).check();
+      const firstCaptureCard = page.locator("#historyRail .poster-card").first();
+      const captureSource = await firstCaptureCard.locator("img").getAttribute("src");
+      await firstCaptureCard.click();
+      assert.equal(await page.locator("#detailContent img").getAttribute("src"), captureSource);
+      assert.equal(await page.locator("#detailContent .eyebrow").innerText(), "SYNTHETIC CANONICAL CLIP");
+      await page.locator("#detailDialog .dialog-close").click();
+      await page.getByLabel("Poster", { exact: true }).check();
       for (const tab of ["Repetition Run", "Unique Clips", "Content Issues", "Analytics", "Review Center"]) {
         await page.getByRole("button", { name: tab, exact: true }).click();
         await page.getByRole("heading", { name: tab, exact: true }).waitFor();
