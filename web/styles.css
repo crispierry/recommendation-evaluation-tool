@@ -146,7 +146,7 @@ button { color: inherit; }
 .review-evidence { min-width: 0; }
 .review-poster { display: block; width: 100%; aspect-ratio: 2 / 3; object-fit: cover; }
 .review-capture { margin: 10px 0 0; border: 1px solid var(--line); }
-.review-capture img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
+.review-capture img { display: block; width: 100%; aspect-ratio: 9 / 16; object-fit: cover; }
 .review-capture figcaption { padding: 7px; color: var(--muted); font: 8px ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .08em; text-align: center; text-transform: uppercase; }
 .review-case-copy { min-width: 0; }
 .review-card h2 { margin-top: 14px; font-size: 29px; }

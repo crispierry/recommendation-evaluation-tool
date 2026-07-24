@@ -513,7 +513,7 @@ function renderReview() {
         <div class="review-evidence">
           <img class="review-poster" src="${title.posterPath}" alt="${escapeHtml(item.title)} fictional poster artwork" loading="lazy">
           <figure class="review-capture">
-            <img src="${item.screenPath}" alt="Synthetic clip evidence for ${escapeHtml(item.title)}" loading="lazy">
+            <img src="assets/review-evidence/${item.clipId}.webp" alt="Portrait synthetic clip evidence for ${escapeHtml(item.title)}" loading="lazy">
             <figcaption>Captured clip evidence</figcaption>
           </figure>
         </div>
