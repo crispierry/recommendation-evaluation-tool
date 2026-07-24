@@ -125,12 +125,39 @@ button { color: inherit; }
 
 .issue-grid, .review-list, .analysis-grid { max-width: var(--max-content); margin: 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
 .issue-card, .review-card, .analysis-card, .method-card { border: 1px solid var(--line); background: var(--paper); color: var(--ink); padding: 20px; }
-.issue-card img, .review-card img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; object-position: center 35%; filter: saturate(.82); }
+.issue-card { padding: 0; overflow: hidden; }
+.issue-card > img { display: block; width: 100%; aspect-ratio: 8 / 5; object-fit: cover; filter: saturate(.9); }
+.issue-card-copy { padding: 20px; }
+.issue-card-head, .review-case-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.issue-card-head .eyebrow, .review-case-head .eyebrow { margin: 0; }
+.issue-card-head span, .review-status { color: var(--accent); font: 10px ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .08em; text-transform: uppercase; }
 .issue-card h2, .review-card h2, .analysis-card h2, .method-card h2 { margin: 12px 0 8px; font: 400 25px Georgia, serif; }
 .issue-card p, .review-card p, .analysis-card p, .method-card p { color: var(--muted); line-height: 1.55; }
-.issue-card code { font-size: 11px; }
+.issue-definition, .review-metadata { margin: 18px 0 0; }
+.issue-definition div { padding: 11px 0; border-top: 1px solid var(--line); }
+.issue-definition dt, .review-metadata dt { color: var(--muted); font: 9px ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .1em; text-transform: uppercase; }
+.issue-definition dd, .review-metadata dd { margin: 5px 0 0; font-size: 12px; line-height: 1.45; }
+.affected-titles { margin-top: 16px; padding: 14px; background: var(--surface); }
+.affected-titles > strong { font: 10px ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .08em; text-transform: uppercase; }
+.affected-titles ul { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 0; padding: 0; list-style: none; }
+.affected-titles li { border: 1px solid var(--line); background: var(--paper); padding: 5px 7px; font-size: 11px; }
+.review-list { grid-template-columns: repeat(2, 1fr); }
+.review-card { display: grid; grid-template-columns: minmax(128px, .7fr) minmax(0, 1.7fr); gap: 20px; }
+.review-evidence { min-width: 0; }
+.review-poster { display: block; width: 100%; aspect-ratio: 2 / 3; object-fit: cover; }
+.review-capture { margin: 10px 0 0; border: 1px solid var(--line); }
+.review-capture img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
+.review-capture figcaption { padding: 7px; color: var(--muted); font: 8px ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .08em; text-align: center; text-transform: uppercase; }
+.review-case-copy { min-width: 0; }
+.review-card h2 { margin-top: 14px; font-size: 29px; }
+.review-card h3 { margin: 0 0 8px; font-size: 13px; }
+.review-card p { margin: 0; font-size: 12px; }
+.review-metadata { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border: solid var(--line); border-width: 1px 0 0 1px; }
+.review-metadata div { min-width: 0; border: solid var(--line); border-width: 0 1px 1px 0; padding: 9px; }
+.review-metadata dd { overflow-wrap: anywhere; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px; }
 .review-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 16px; }
-.review-actions button, .secondary-button { min-height: 42px; border: 1px solid var(--line); background: transparent; cursor: pointer; padding: 9px 12px; }
+.review-actions button, .secondary-button { min-height: 42px; border: 1px solid var(--line); background: transparent; cursor: pointer; padding: 9px 8px; }
+.review-actions button { font-size: 11px; }
 .review-actions button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
 .secondary-button { color: inherit; }
 
@@ -422,7 +449,8 @@ dialog::backdrop { background: rgba(0,0,0,.72); }
 
 @media (max-width: 1080px) {
   .poster-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
-  .issue-grid, .review-list { grid-template-columns: repeat(2, 1fr); }
+  .issue-grid { grid-template-columns: repeat(2, 1fr); }
+  .review-list { grid-template-columns: 1fr; }
   .catalog-row { grid-template-columns: 70px minmax(180px, 1fr) repeat(3, 120px); }
 }
 
@@ -437,6 +465,9 @@ dialog::backdrop { background: rgba(0,0,0,.72); }
   .poster-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
   .poster-card .card-copy { min-height: 58px; padding: 7px; }
   .issue-grid, .review-list, .analysis-grid { grid-template-columns: 1fr; }
+  .review-card { grid-template-columns: 112px minmax(0, 1fr); gap: 14px; padding: 14px; }
+  .review-case-head { align-items: flex-start; flex-direction: column; gap: 6px; }
+  .review-actions { grid-template-columns: 1fr; }
   .catalog-row { grid-template-columns: 58px 1fr; gap: 12px; }
   .catalog-row img { width: 52px; height: 68px; }
   .catalog-cell { grid-column: 2; }

@@ -12,6 +12,30 @@ const state = {
   catalogSort: "title",
 };
 
+const ISSUE_TYPES = {
+  "identity-check": {
+    title: "Title identity",
+    description: "Flags captures whose title treatment is obscured or otherwise difficult to reconcile with the canonical catalog.",
+    signal: "Captured frame ↔ canonical title",
+    task: "Confirm that the clip belongs to the expected fictional title.",
+    artPath: "assets/issue-types/identity-check.webp",
+  },
+  "scene-check": {
+    title: "Possible scene duplication",
+    description: "Surfaces visually similar frames that may be distinct clips, alternate edits, or unintended duplicates.",
+    signal: "Frame composition ↔ clip identity",
+    task: "Compare the evidence and determine whether the scenes are meaningfully distinct.",
+    artPath: "assets/issue-types/scene-check.webp",
+  },
+  "metadata-check": {
+    title: "Missing metadata",
+    description: "Finds incomplete non-critical fields that prevent a captured clip from being fully reconciled with the title index.",
+    signal: "Capture evidence ↔ catalog record",
+    task: "Complete the missing field using the available title and clip evidence.",
+    artPath: "assets/issue-types/metadata-check.webp",
+  },
+};
+
 const [
   config,
   catalog,
@@ -248,20 +272,34 @@ function renderCatalog() {
 function renderIssues() {
   const grouped = groupCounts(review.cases, (item) => item.type);
   metricStrip("#issuesSummary", [
-    [review.cases.length, "synthetic cases"],
-    [grouped.get("identity-check") || 0, "identity checks"],
-    [grouped.get("scene-check") || 0, "scene comparisons"],
-    [grouped.get("metadata-check") || 0, "metadata checks"],
+    [Object.keys(ISSUE_TYPES).length, "issue categories"],
+    [review.cases.length, "affected captures"],
+    [new Set(review.cases.map((item) => item.titleId)).size, "fictional titles"],
+    ["100%", "synthetic evidence"],
   ]);
   document.querySelector("#issuesGrid").replaceChildren(
-    ...review.cases.map((item) => {
+    ...Object.entries(ISSUE_TYPES).map(([type, issue]) => {
+      const cases = review.cases.filter((item) => item.type === type);
       const card = element("article", "issue-card");
+      card.dataset.issueType = type;
       card.innerHTML = `
-        <img src="${item.screenPath}" alt="" loading="lazy">
-        <p class="eyebrow">${escapeHtml(item.type.replace("-", " "))}</p>
-        <h2>${escapeHtml(item.label)}</h2>
-        <p>${escapeHtml(item.prompt)}</p>
-        <code>${escapeHtml(item.id)} · ${escapeHtml(item.clipId)}</code>`;
+        <img src="${issue.artPath}" alt="${escapeHtml(issue.title)} editorial workflow illustration" loading="lazy">
+        <div class="issue-card-copy">
+          <div class="issue-card-head">
+            <p class="eyebrow">Diagnostic category</p>
+            <span>${cases.length} queued</span>
+          </div>
+          <h2>${escapeHtml(issue.title)}</h2>
+          <p>${escapeHtml(issue.description)}</p>
+          <dl class="issue-definition">
+            <div><dt>Signal</dt><dd>${escapeHtml(issue.signal)}</dd></div>
+            <div><dt>Reviewer task</dt><dd>${escapeHtml(issue.task)}</dd></div>
+          </dl>
+          <div class="affected-titles">
+            <strong>Affected fictional titles</strong>
+            <ul>${cases.map((item) => `<li>${escapeHtml(item.title)}</li>`).join("")}</ul>
+          </div>
+        </div>`;
       return card;
     }),
   );
@@ -467,13 +505,34 @@ function renderReview() {
   ]);
   document.querySelector("#reviewList").replaceChildren(
     ...review.cases.map((item) => {
+      const title = state.data.titles.get(item.titleId);
+      const issue = ISSUE_TYPES[item.type];
       const card = element("article", "review-card");
+      card.dataset.caseId = item.id;
       card.innerHTML = `
-        <img src="${item.screenPath}" alt="" loading="lazy">
-        <p class="eyebrow">${escapeHtml(item.type.replace("-", " "))}</p>
-        <h2>${escapeHtml(item.title)}</h2>
-        <p>${escapeHtml(item.prompt)}</p>
-        <div class="review-actions" role="group" aria-label="Decision for ${escapeHtml(item.title)}"></div>`;
+        <div class="review-evidence">
+          <img class="review-poster" src="${title.posterPath}" alt="${escapeHtml(item.title)} fictional poster artwork" loading="lazy">
+          <figure class="review-capture">
+            <img src="${item.screenPath}" alt="Synthetic clip evidence for ${escapeHtml(item.title)}" loading="lazy">
+            <figcaption>Captured clip evidence</figcaption>
+          </figure>
+        </div>
+        <div class="review-case-copy">
+          <div class="review-case-head">
+            <p class="eyebrow">${escapeHtml(issue.title)}</p>
+            <span class="review-status">${decisions[item.id] ? `Resolved · ${escapeHtml(decisions[item.id])}` : "Needs review"}</span>
+          </div>
+          <h2>${escapeHtml(item.title)}</h2>
+          <h3>${escapeHtml(item.label)}</h3>
+          <p>${escapeHtml(item.prompt)}</p>
+          <dl class="review-metadata">
+            <div><dt>Case</dt><dd>${escapeHtml(item.id)}</dd></div>
+            <div><dt>Title ID</dt><dd>${escapeHtml(item.titleId)}</dd></div>
+            <div><dt>Clip ID</dt><dd>${escapeHtml(item.clipId)}</dd></div>
+            <div><dt>Suggested</dt><dd>${escapeHtml(item.suggestedDecision)}</dd></div>
+          </dl>
+          <div class="review-actions" role="group" aria-label="Decision for ${escapeHtml(item.title)}"></div>
+        </div>`;
       const actions = card.querySelector(".review-actions");
       for (const value of ["confirm", "complete", "abstain"]) {
         const button = element("button");

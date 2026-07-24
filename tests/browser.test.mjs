@@ -59,6 +59,9 @@ test("dashboard works at desktop and mobile widths without network dependencies"
         await page.getByRole("button", { name: tab, exact: true }).click();
         await page.getByRole("heading", { name: tab, exact: true }).waitFor();
       }
+      await page.getByRole("button", { name: "Content Issues", exact: true }).click();
+      assert.equal(await page.locator("#issuesGrid .issue-card").count(), 3);
+      assert.equal(await page.locator('#issuesGrid img[src^="assets/issue-types/"]').count(), 3);
       await page.getByRole("button", { name: "Findings Report", exact: true }).click();
       await page.getByRole("heading", { name: "What the synthetic feed evaluation found", exact: true }).waitFor();
       assert.equal(await page.locator("#findingsRepeatTables table").count(), 3);
@@ -67,6 +70,8 @@ test("dashboard works at desktop and mobile widths without network dependencies"
       assert.match(await page.locator("#findingsExecutiveSummary").innerText(), /RFY explains only part/);
       await page.getByRole("button", { name: "Review Center", exact: true }).click();
       assert.equal(await page.locator("#reviewList .review-card").count(), 9);
+      assert.match(await page.locator("#reviewList .review-card").first().locator(".review-poster").getAttribute("src"), /^assets\/posters\//);
+      assert.match(await page.locator("#reviewList .review-card").first().locator(".review-capture img").getAttribute("src"), /^assets\/screens\//);
       const dimensions = await page.evaluate(() => ({
         scrollWidth: document.documentElement.scrollWidth,
         clientWidth: document.documentElement.clientWidth,
