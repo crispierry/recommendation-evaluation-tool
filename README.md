@@ -21,11 +21,18 @@ Everything in the repository is generated:
 - 2,000 fictional canonical clips, with 3–5 clips per title
 - fictional profiles and ordered recommendations
 - fictional 30-title RFY rails for cross-surface comparison
-- fictional poster art and vertical screen captures
+- 500 title-specific fictional poster scenes in a hand-drawn navy-ink and watercolor editorial style
+- fictional vertical screen captures
 - a small fictional human-review queue
 
 The application does not call external services, load third-party media, or
 contain a production capture pipeline.
+
+Each catalog title has its own generated raster illustration and a checked-in
+scene brief in `config/poster-prompts.json`. The images contain no typography,
+logos, recognizable actors, or references to existing entertainment
+properties. `npm run audit:posters` verifies count, dimensions, exact
+uniqueness, visual complexity, and perceptual separation before release.
 
 ## Published configuration
 

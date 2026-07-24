@@ -11,8 +11,9 @@
     "build": "node scripts/build.mjs",
     "preview": "node scripts/serve.mjs",
     "test": "node --test tests/*.test.mjs",
+    "audit:posters": "node scripts/audit-posters.mjs",
     "audit:public": "node scripts/audit-public.mjs",
-    "verify": "npm run build && npm run test && npm run audit:public"
+    "verify": "npm run build && npm run test && npm run audit:posters && npm run audit:public"
   },
   "dependencies": {
     "sharp": "^0.35.3"
