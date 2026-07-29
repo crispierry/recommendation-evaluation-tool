@@ -621,7 +621,7 @@ async function renderPoster(title, destination) {
   try {
     await sharp(generatedArtwork)
       .resize(200, 300, { fit: "cover", position: "attention" })
-      .webp({ quality: 38, effort: 6 })
+      .webp({ quality: 30, effort: 6 })
       .toFile(destination);
     return;
   } catch (error) {
