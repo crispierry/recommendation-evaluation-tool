@@ -16,7 +16,7 @@
     "verify": "npm run build && npm run test && npm run audit:posters && npm run audit:public"
   },
   "dependencies": {
-    "sharp": "^0.35.3"
+    "sharp": "0.35.5"
   },
   "devDependencies": {
     "playwright": "1.61.1"
