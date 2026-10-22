@@ -4,7 +4,7 @@
   "private": false,
   "type": "module",
   "engines": {
-    "node": ">=22"
+    "node": "22.23.4"
   },
   "scripts": {
     "generate": "node scripts/generate.mjs",
@@ -16,7 +16,7 @@
     "verify": "npm run build && npm run test && npm run audit:posters && npm run audit:public"
   },
   "dependencies": {
-    "sharp": "^0.35.3"
+    "sharp": "0.35.5"
   },
   "devDependencies": {
     "playwright": "1.61.1"
